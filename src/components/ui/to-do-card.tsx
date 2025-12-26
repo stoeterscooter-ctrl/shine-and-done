@@ -19,7 +19,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown } from "lucide-react";
+import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown, FileText, X } from "lucide-react";
+import { LiveMarkdownEditor } from "./markdown-editor";
 
 interface TodoItem {
   id: string;
@@ -27,32 +28,50 @@ interface TodoItem {
   done: boolean;
   children?: TodoItem[];
   expanded?: boolean;
+  notes?: string;
+  dueDate?: string;
 }
 
+const formatDate = () => {
+  const now = new Date();
+  return now.toLocaleDateString("en-US", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
+};
+
+const getDefaultNotes = (title: string) => {
+  return `## ${title}\n\n**Due:** ${formatDate()}\n\n---\n\nAdd your notes here...\n\n- [ ] Subtask 1\n- [ ] Subtask 2`;
+};
+
 const initialItems: TodoItem[] = [
-  { id: "1", text: "Review Calendar PR (React/TS)", done: false, children: [], expanded: true },
+  { id: "1", text: "Review Calendar PR (React/TS)", done: false, children: [], expanded: true, notes: "" },
   { 
     id: "2", 
     text: "Implement authentication in the email provider", 
     done: false, 
     expanded: true,
+    notes: "",
     children: [
-      { id: "2-1", text: "Set up OAuth providers", done: true, children: [] },
-      { id: "2-2", text: "Add session management", done: false, children: [] },
+      { id: "2-1", text: "Set up OAuth providers", done: true, children: [], notes: "" },
+      { id: "2-2", text: "Add session management", done: false, children: [], notes: "" },
     ]
   },
-  { id: "3", text: "Refactor components in the Tauri/React 19 app", done: false, children: [], expanded: true },
-  { id: "4", text: "Test image downloads in Novon", done: false, children: [], expanded: true },
+  { id: "3", text: "Refactor components in the Tauri/React 19 app", done: false, children: [], expanded: true, notes: "" },
+  { id: "4", text: "Test image downloads in Novon", done: false, children: [], expanded: true, notes: "" },
   { 
     id: "5", 
     text: "Organize CSS and layouts", 
     done: true, 
     expanded: true,
+    notes: "",
     children: [
-      { id: "5-1", text: "Clean up unused styles", done: true, children: [] },
+      { id: "5-1", text: "Clean up unused styles", done: true, children: [], notes: "" },
     ]
   },
-  { id: "6", text: "Draft the apps roadmap", done: false, children: [], expanded: true },
+  { id: "6", text: "Draft the apps roadmap", done: false, children: [], expanded: true, notes: "" },
 ];
 
 const CONFETTI_COLORS = ["#10b981", "#f59e0b", "#6366f1", "#ef4444", "#06b6d4"];
@@ -82,6 +101,8 @@ interface SortableItemProps {
   onDelete: (id: string) => void;
   onAddChild: (parentId: string) => void;
   onToggleExpand: (id: string) => void;
+  onOpenDetails: (id: string) => void;
+  selectedId?: string | null;
   isDragging?: boolean;
 }
 
@@ -92,6 +113,8 @@ function SortableItem({
   onDelete, 
   onAddChild,
   onToggleExpand,
+  onOpenDetails,
+  selectedId,
   isDragging 
 }: SortableItemProps) {
   const {
@@ -109,12 +132,13 @@ function SortableItem({
   };
 
   const hasChildren = item.children && item.children.length > 0;
+  const isSelected = selectedId === item.id;
 
   return (
     <div ref={setNodeRef} style={style}>
       <div
         className={`group flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all duration-200 ${
-          item.done ? "bg-slate-100" : "hover:bg-slate-50"
+          isSelected ? "bg-yellow-100 ring-1 ring-yellow-300" : item.done ? "bg-slate-100" : "hover:bg-slate-50"
         } ${isSortableDragging ? "opacity-50 scale-95" : ""} ${isDragging ? "shadow-lg" : ""}`}
         style={{ marginLeft: depth * 24 }}
       >
@@ -170,12 +194,24 @@ function SortableItem({
 
         {/* Text */}
         <span
-          className={`flex-1 text-sm transition-all duration-200 ${
+          onClick={() => onOpenDetails(item.id)}
+          className={`flex-1 text-sm transition-all duration-200 cursor-pointer hover:text-gray-700 ${
             item.done ? "text-gray-500 line-through" : "text-gray-900"
           }`}
         >
           {item.text}
         </span>
+
+        {/* Details button */}
+        <button
+          onClick={() => onOpenDetails(item.id)}
+          className={`p-1 transition-all ${
+            isSelected ? "text-yellow-600" : "text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100"
+          }`}
+          title="View details"
+        >
+          <FileText size={14} />
+        </button>
 
         {/* Add subtask button */}
         <button
@@ -208,6 +244,8 @@ function SortableItem({
               onDelete={onDelete}
               onAddChild={onAddChild}
               onToggleExpand={onToggleExpand}
+              onOpenDetails={onOpenDetails}
+              selectedId={selectedId}
             />
           ))}
         </SortableContext>
@@ -222,6 +260,7 @@ export function TodoCard() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isOverDelete, setIsOverDelete] = useState(false);
   const [newTaskText, setNewTaskText] = useState("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -390,6 +429,24 @@ export function TodoCard() {
     setNewTaskText("");
   };
 
+  const updateItemNotes = (items: TodoItem[], id: string, notes: string): TodoItem[] => {
+    return items.map((item) => {
+      if (item.id === id) {
+        return { ...item, notes };
+      }
+      if (item.children) {
+        return { ...item, children: updateItemNotes(item.children, id, notes) };
+      }
+      return item;
+    });
+  };
+
+  const handleUpdateNotes = (id: string, notes: string) => {
+    setItems(updateItemNotes(items, id, notes));
+  };
+
+  const selectedItem = selectedId ? findItemById(items, selectedId) : null;
+
   const resetList = () => setItems(initialItems);
 
   const countAllItems = (items: TodoItem[]): { total: number; done: number } => {
@@ -463,12 +520,14 @@ export function TodoCard() {
   );
 
   return (
-    <div
-      className={`w-[420px] rounded-2xl shadow-lg border overflow-hidden bg-white transition-all duration-500 ${
-        allDone ? "border-emerald-200 ring-2 ring-emerald-200 scale-[1.01]" : "border-slate-100"
-      }`}
-    >
-      {Header}
+    <div className="flex">
+      {/* Main Todo Card */}
+      <div
+        className={`w-[420px] rounded-2xl shadow-lg border overflow-hidden bg-white transition-all duration-500 ${
+          allDone ? "border-emerald-200 ring-2 ring-emerald-200 scale-[1.01]" : "border-slate-100"
+        } ${selectedId ? "rounded-r-none border-r-0" : ""}`}
+      >
+        {Header}
 
       <DndContext
         sensors={sensors}
@@ -518,6 +577,8 @@ export function TodoCard() {
                       onDelete={handleDelete}
                       onAddChild={handleAddChild}
                       onToggleExpand={handleToggleExpand}
+                      onOpenDetails={(id) => setSelectedId(selectedId === id ? null : id)}
+                      selectedId={selectedId}
                     />
                   ))}
                 </ul>
@@ -554,6 +615,40 @@ export function TodoCard() {
           ) : null}
         </DragOverlay>
       </DndContext>
+      </div>
+
+      {/* Expandable Details Panel */}
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-out ${
+          selectedId ? "w-[380px] opacity-100" : "w-0 opacity-0"
+        }`}
+      >
+        {selectedItem && (
+          <div className="w-[380px] h-full bg-white border border-l-0 border-slate-100 rounded-r-2xl shadow-lg flex flex-col">
+            {/* Panel Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-tr-2xl">
+              <div className="flex-1 min-w-0">
+                <h4 className="text-sm font-semibold text-gray-900 truncate">{selectedItem.text}</h4>
+                <p className="text-xs text-gray-500">Task details</p>
+              </div>
+              <button
+                onClick={() => setSelectedId(null)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Markdown Editor */}
+            <div className="flex-1 min-h-[400px]">
+              <LiveMarkdownEditor
+                value={selectedItem.notes || getDefaultNotes(selectedItem.text)}
+                onChange={(notes) => handleUpdateNotes(selectedItem.id, notes)}
+              />
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
