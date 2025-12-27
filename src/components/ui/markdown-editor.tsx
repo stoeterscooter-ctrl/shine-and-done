@@ -1,4 +1,5 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useRef } from "react";
+import { Bold, Italic, Heading1, Heading2, Heading3, List, ListOrdered, Quote, Code, Strikethrough } from "lucide-react";
 
 interface MarkdownEditorProps {
   value: string;
@@ -17,6 +18,25 @@ export function MarkdownEditor({ value, onChange, className = "" }: MarkdownEdit
         spellCheck={false}
       />
     </div>
+  );
+}
+
+interface ToolbarButtonProps {
+  icon: React.ReactNode;
+  onClick: () => void;
+  title: string;
+}
+
+function ToolbarButton({ icon, onClick, title }: ToolbarButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
+      className="p-1.5 rounded hover:bg-gray-200 text-gray-600 hover:text-gray-900 transition-colors"
+    >
+      {icon}
+    </button>
   );
 }
 
@@ -104,9 +124,113 @@ interface LiveMarkdownEditorProps {
 
 export function LiveMarkdownEditor({ value, onChange, className = "" }: LiveMarkdownEditorProps) {
   const [mode, setMode] = React.useState<"write" | "preview">("write");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const insertFormatting = (prefix: string, suffix: string = "", placeholder: string = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = value.substring(start, end);
+    const textToInsert = selectedText || placeholder;
+    
+    const newText = 
+      value.substring(0, start) + 
+      prefix + textToInsert + suffix + 
+      value.substring(end);
+    
+    onChange(newText);
+    
+    // Set cursor position after update
+    setTimeout(() => {
+      textarea.focus();
+      const newCursorPos = selectedText 
+        ? start + prefix.length + textToInsert.length + suffix.length
+        : start + prefix.length;
+      textarea.setSelectionRange(newCursorPos, newCursorPos);
+    }, 0);
+  };
+
+  const insertLinePrefix = (prefix: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const lineStart = value.lastIndexOf('\n', start - 1) + 1;
+    
+    const newText = 
+      value.substring(0, lineStart) + 
+      prefix + 
+      value.substring(lineStart);
+    
+    onChange(newText);
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, start + prefix.length);
+    }, 0);
+  };
   
   return (
     <div className={`flex flex-col h-full ${className}`}>
+      {/* Toolbar */}
+      <div className="flex items-center gap-0.5 px-2 py-1.5 border-b border-gray-100 bg-gray-50/50">
+        <ToolbarButton
+          icon={<Bold size={16} />}
+          onClick={() => insertFormatting("**", "**", "bold")}
+          title="Bold (Ctrl+B)"
+        />
+        <ToolbarButton
+          icon={<Italic size={16} />}
+          onClick={() => insertFormatting("*", "*", "italic")}
+          title="Italic (Ctrl+I)"
+        />
+        <ToolbarButton
+          icon={<Strikethrough size={16} />}
+          onClick={() => insertFormatting("~~", "~~", "strikethrough")}
+          title="Strikethrough"
+        />
+        <div className="w-px h-4 bg-gray-200 mx-1" />
+        <ToolbarButton
+          icon={<Heading1 size={16} />}
+          onClick={() => insertLinePrefix("# ")}
+          title="Heading 1"
+        />
+        <ToolbarButton
+          icon={<Heading2 size={16} />}
+          onClick={() => insertLinePrefix("## ")}
+          title="Heading 2"
+        />
+        <ToolbarButton
+          icon={<Heading3 size={16} />}
+          onClick={() => insertLinePrefix("### ")}
+          title="Heading 3"
+        />
+        <div className="w-px h-4 bg-gray-200 mx-1" />
+        <ToolbarButton
+          icon={<List size={16} />}
+          onClick={() => insertLinePrefix("- ")}
+          title="Bullet List"
+        />
+        <ToolbarButton
+          icon={<ListOrdered size={16} />}
+          onClick={() => insertLinePrefix("1. ")}
+          title="Numbered List"
+        />
+        <div className="w-px h-4 bg-gray-200 mx-1" />
+        <ToolbarButton
+          icon={<Quote size={16} />}
+          onClick={() => insertLinePrefix("> ")}
+          title="Blockquote"
+        />
+        <ToolbarButton
+          icon={<Code size={16} />}
+          onClick={() => insertFormatting("`", "`", "code")}
+          title="Inline Code"
+        />
+      </div>
+
       {/* Mode toggle */}
       <div className="flex gap-1 p-2 border-b border-gray-100">
         <button
@@ -135,6 +259,7 @@ export function LiveMarkdownEditor({ value, onChange, className = "" }: LiveMark
       <div className="flex-1 overflow-auto">
         {mode === "write" ? (
           <textarea
+            ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Write your notes in markdown..."
