@@ -19,7 +19,8 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown, FileText, X } from "lucide-react";
+import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown, FileText, X, Sun, Moon } from "lucide-react";
+import { useTheme } from "next-themes";
 import { LiveMarkdownEditor } from "./markdown-editor";
 
 interface TodoItem {
@@ -261,6 +262,12 @@ export function TodoCard() {
   const [isOverDelete, setIsOverDelete] = useState(false);
   const [newTaskText, setNewTaskText] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -486,6 +493,10 @@ export function TodoCard() {
 
   const activeItem = activeId ? findItemById(items, activeId) : null;
 
+  const toggleTheme = () => {
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
+  };
+
   const Header = (
     <div
       className={`flex items-center justify-between px-4 py-3 ${
@@ -501,21 +512,34 @@ export function TodoCard() {
         </span>
       </div>
 
-      {allDone ? (
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-semibold text-gray-900">All done!</span>
+      <div className="flex items-center gap-2">
+        {/* Theme toggle */}
+        {mounted && (
           <button
-            onClick={resetList}
-            className="text-gray-900 font-semibold text-xs px-2 py-1 rounded-md bg-white/60 hover:bg-white/80 transition"
+            onClick={toggleTheme}
+            className="p-1.5 rounded-md bg-white/60 hover:bg-white/80 transition-colors text-gray-700"
+            title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
-            Reset
+            {resolvedTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
           </button>
-        </div>
-      ) : (
-        <span className="text-sm font-medium text-gray-700">
-          {counts.done}/{counts.total}
-        </span>
-      )}
+        )}
+
+        {allDone ? (
+          <>
+            <span className="text-sm font-semibold text-gray-900">All done!</span>
+            <button
+              onClick={resetList}
+              className="text-gray-900 font-semibold text-xs px-2 py-1 rounded-md bg-white/60 hover:bg-white/80 transition"
+            >
+              Reset
+            </button>
+          </>
+        ) : (
+          <span className="text-sm font-medium text-gray-700">
+            {counts.done}/{counts.total}
+          </span>
+        )}
+      </div>
     </div>
   );
 
