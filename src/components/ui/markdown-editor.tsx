@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { BlockNoteView } from "@blocknote/mantine";
 import { useCreateBlockNote } from "@blocknote/react";
+import { useTheme } from "next-themes";
 import "@blocknote/mantine/style.css";
 
 import { cn } from "@/lib/utils";
@@ -14,6 +15,7 @@ interface LiveMarkdownEditorProps {
 // BlockNote provides native markdown shortcuts (e.g. typing "## " creates a heading)
 // so we intentionally avoid any custom markdown parsing/caret handling here.
 export function LiveMarkdownEditor({ value, onChange, className }: LiveMarkdownEditorProps) {
+  const { resolvedTheme } = useTheme();
   const editor = useCreateBlockNote();
 
   const onChangeRef = useRef(onChange);
@@ -51,7 +53,7 @@ export function LiveMarkdownEditor({ value, onChange, className }: LiveMarkdownE
 
   return (
     <div className={cn("h-full overflow-hidden rounded-lg border border-border bg-background", className)}>
-      <BlockNoteView editor={editor} theme="light" />
+      <BlockNoteView editor={editor} theme={resolvedTheme === "dark" ? "dark" : "light"} />
     </div>
   );
 }
