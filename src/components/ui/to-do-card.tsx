@@ -308,7 +308,7 @@ function SortableItem({
               onToggleExpand={onToggleExpand}
               onOpenDetails={onOpenDetails}
               onSetDueDate={onSetDueDate}
-              selectedId={selectedId}
+              onRenameItem={onRenameItem}
             />
           ))}
         </SortableContext>
@@ -541,7 +541,17 @@ export function TodoCard() {
     setItems(updateItemNotes(items, id, notes));
   };
 
-  const selectedItem = selectedId ? findItemById(items, selectedId) : null;
+  const renameItemById = (items: TodoItem[], id: string, text: string): TodoItem[] => {
+    return items.map((item) => {
+      if (item.id === id) return { ...item, text };
+      if (item.children) return { ...item, children: renameItemById(item.children, id, text) };
+      return item;
+    });
+  };
+
+  const handleRenameItem = (id: string, text: string) => {
+    setItems(renameItemById(items, id, text));
+  };
 
   const resetList = () => setItems(initialItems);
 
@@ -692,6 +702,7 @@ export function TodoCard() {
                       onToggleExpand={handleToggleExpand}
                       onOpenDetails={(id) => setSelectedId(selectedId === id ? null : id)}
                       onSetDueDate={handleSetDueDate}
+                      onRenameItem={handleRenameItem}
                       selectedId={selectedId}
                     />
                   ))}
