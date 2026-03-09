@@ -711,9 +711,38 @@ export function TodoCard() {
                 </button>
               </div>
 
-              <SortableContext items={flattenItems(items)} strategy={verticalListSortingStrategy}>
+              {/* Search & Filter */}
+              <div className="flex gap-2 mb-4">
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Search tasks..."
+                    className="w-full pl-8 pr-3 py-1.5 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent placeholder:text-muted-foreground"
+                  />
+                </div>
+                <div className="flex rounded-lg border border-input overflow-hidden text-xs">
+                  {(["all", "active", "done"] as const).map((f) => (
+                    <button
+                      key={f}
+                      onClick={() => setStatusFilter(f)}
+                      className={`px-2.5 py-1.5 capitalize transition-colors ${
+                        statusFilter === f
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-background text-muted-foreground hover:bg-muted"
+                      }`}
+                    >
+                      {f}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <SortableContext items={flattenItems(isFiltering ? displayItems : items)} strategy={verticalListSortingStrategy}>
                 <ul className="space-y-1">
-                  {items.map((item) => (
+                  {displayItems.map((item) => (
                     <SortableItem
                       key={item.id}
                       item={item}
@@ -727,6 +756,11 @@ export function TodoCard() {
                       selectedId={selectedId}
                     />
                   ))}
+                  {displayItems.length === 0 && isFiltering && (
+                    <li className="text-center text-sm text-muted-foreground py-6">
+                      No tasks match your search
+                    </li>
+                  )}
                 </ul>
               </SortableContext>
 
