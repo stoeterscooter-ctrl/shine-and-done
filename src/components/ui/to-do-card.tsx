@@ -85,8 +85,8 @@ function DeleteZone({ isOver }: { isOver: boolean }) {
       ref={setNodeRef}
       className={`flex items-center justify-center gap-2 py-3 px-4 rounded-xl border-2 border-dashed transition-all duration-300 ${
         isOver
-          ? "border-red-400 bg-red-50 text-red-600 scale-105"
-          : "border-gray-300 bg-gray-50 text-gray-400"
+          ? "border-destructive bg-destructive/10 text-destructive scale-105"
+          : "border-border bg-muted text-muted-foreground"
       }`}
     >
       <Trash2 size={18} />
@@ -135,11 +135,11 @@ function SortableItem({
   const hasChildren = item.children && item.children.length > 0;
   const isSelected = selectedId === item.id;
 
-  return (
+    return (
     <div ref={setNodeRef} style={style}>
       <div
         className={`group flex items-center gap-2 px-2 py-1.5 rounded-lg transition-all duration-200 ${
-          isSelected ? "bg-yellow-100 ring-1 ring-yellow-300" : item.done ? "bg-slate-100" : "hover:bg-slate-50"
+          isSelected ? "bg-accent ring-1 ring-ring" : item.done ? "bg-muted" : "hover:bg-muted/50"
         } ${isSortableDragging ? "opacity-50 scale-95" : ""} ${isDragging ? "shadow-lg" : ""}`}
         style={{ marginLeft: depth * 24 }}
       >
@@ -147,7 +147,7 @@ function SortableItem({
         <button
           {...attributes}
           {...listeners}
-          className="cursor-grab active:cursor-grabbing p-1 text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity"
+          className="cursor-grab active:cursor-grabbing p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <GripVertical size={14} />
         </button>
@@ -156,7 +156,7 @@ function SortableItem({
         {hasChildren ? (
           <button
             onClick={() => onToggleExpand(item.id)}
-            className="p-0.5 text-gray-400 hover:text-gray-600 transition-colors"
+            className="p-0.5 text-muted-foreground hover:text-foreground transition-colors"
           >
             {item.expanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
           </button>
@@ -175,12 +175,12 @@ function SortableItem({
           <span
             className={`flex items-center justify-center w-5 h-5 rounded-md border transition-all duration-200 ease-out transform ${
               item.done
-                ? "bg-gray-900 border-gray-900 scale-95"
-                : "border-gray-300 bg-white scale-100"
+                ? "bg-primary border-primary scale-95"
+                : "border-input bg-background scale-100"
             }`}
           >
             <svg
-              className={`w-3 h-3 text-white transition-opacity duration-200 ${
+              className={`w-3 h-3 text-primary-foreground transition-opacity duration-200 ${
                 item.done ? "opacity-100" : "opacity-0"
               }`}
               fill="none"
@@ -196,8 +196,8 @@ function SortableItem({
         {/* Text */}
         <span
           onClick={() => onOpenDetails(item.id)}
-          className={`flex-1 text-sm transition-all duration-200 cursor-pointer hover:text-gray-700 ${
-            item.done ? "text-gray-500 line-through" : "text-gray-900"
+          className={`flex-1 text-sm transition-all duration-200 cursor-pointer hover:text-foreground ${
+            item.done ? "text-muted-foreground line-through" : "text-foreground"
           }`}
         >
           {item.text}
@@ -207,7 +207,7 @@ function SortableItem({
         <button
           onClick={() => onOpenDetails(item.id)}
           className={`p-1 transition-all ${
-            isSelected ? "text-yellow-600" : "text-gray-400 hover:text-blue-500 opacity-0 group-hover:opacity-100"
+            isSelected ? "text-primary" : "text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100"
           }`}
           title="View details"
         >
@@ -217,7 +217,7 @@ function SortableItem({
         {/* Add subtask button */}
         <button
           onClick={() => onAddChild(item.id)}
-          className="p-1 text-gray-400 hover:text-emerald-500 opacity-0 group-hover:opacity-100 transition-all"
+          className="p-1 text-muted-foreground hover:text-primary opacity-0 group-hover:opacity-100 transition-all"
           title="Add subtask"
         >
           <Plus size={14} />
@@ -226,7 +226,7 @@ function SortableItem({
         {/* Delete button */}
         <button
           onClick={() => onDelete(item.id)}
-          className="p-1 text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+          className="p-1 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-all"
           title="Delete task"
         >
           <Trash2 size={14} />
@@ -501,13 +501,13 @@ export function TodoCard() {
     <div
       className={`flex items-center justify-between px-4 py-3 ${
         allDone
-          ? "bg-gradient-to-b from-emerald-400 to-emerald-300"
-          : "bg-gradient-to-b from-yellow-300 to-yellow-200"
+          ? "bg-gradient-to-b from-emerald-400 to-emerald-300 dark:from-emerald-600 dark:to-emerald-500"
+          : "bg-gradient-to-b from-yellow-300 to-yellow-200 dark:from-yellow-600 dark:to-yellow-500"
       }`}
     >
       <div className="flex items-center space-x-3">
-        <span className="text-sm font-semibold text-gray-900">{dateInfo.date}</span>
-        <span className="bg-black/10 text-gray-800 text-xs font-medium px-2 py-1 rounded-md">
+        <span className="text-sm font-semibold text-foreground">{dateInfo.date}</span>
+        <span className="bg-black/10 dark:bg-white/20 text-foreground text-xs font-medium px-2 py-1 rounded-md">
           {dateInfo.time}
         </span>
       </div>
@@ -517,7 +517,7 @@ export function TodoCard() {
         {mounted && (
           <button
             onClick={toggleTheme}
-            className="p-1.5 rounded-md bg-white/60 hover:bg-white/80 transition-colors text-gray-700"
+            className="p-1.5 rounded-md bg-white/60 dark:bg-black/30 hover:bg-white/80 dark:hover:bg-black/50 transition-colors text-foreground"
             title={resolvedTheme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           >
             {resolvedTheme === "dark" ? <Sun size={16} /> : <Moon size={16} />}
@@ -526,16 +526,16 @@ export function TodoCard() {
 
         {allDone ? (
           <>
-            <span className="text-sm font-semibold text-gray-900">All done!</span>
+            <span className="text-sm font-semibold text-foreground">All done!</span>
             <button
               onClick={resetList}
-              className="text-gray-900 font-semibold text-xs px-2 py-1 rounded-md bg-white/60 hover:bg-white/80 transition"
+              className="text-foreground font-semibold text-xs px-2 py-1 rounded-md bg-white/60 dark:bg-black/30 hover:bg-white/80 dark:hover:bg-black/50 transition"
             >
               Reset
             </button>
           </>
         ) : (
-          <span className="text-sm font-medium text-gray-700">
+          <span className="text-sm font-medium text-foreground/80">
             {counts.done}/{counts.total}
           </span>
         )}
@@ -547,8 +547,8 @@ export function TodoCard() {
     <div className="flex">
       {/* Main Todo Card */}
       <div
-        className={`w-[420px] rounded-2xl shadow-lg border overflow-hidden bg-white transition-all duration-500 ${
-          allDone ? "border-emerald-200 ring-2 ring-emerald-200 scale-[1.01]" : "border-slate-100"
+        className={`w-[420px] rounded-2xl shadow-lg border overflow-hidden bg-card transition-all duration-500 ${
+          allDone ? "border-emerald-200 dark:border-emerald-700 ring-2 ring-emerald-200 dark:ring-emerald-700 scale-[1.01]" : "border-border"
         } ${selectedId ? "rounded-r-none border-r-0" : ""}`}
       >
         {Header}
@@ -563,11 +563,11 @@ export function TodoCard() {
         <div
           className={`relative p-5 ${
             allDone
-              ? "bg-[radial-gradient(circle,rgba(16,185,129,0.08)_1px,transparent_1px)]"
-              : "bg-[radial-gradient(circle,rgba(0,0,0,0.06)_1px,transparent_1px)]"
+              ? "bg-[radial-gradient(circle,rgba(16,185,129,0.08)_1px,transparent_1px)] dark:bg-[radial-gradient(circle,rgba(16,185,129,0.15)_1px,transparent_1px)]"
+              : "bg-[radial-gradient(circle,hsl(var(--muted-foreground)/0.1)_1px,transparent_1px)]"
           } [background-size:10px_10px]`}
         >
-          <h3 className="text-lg font-bold text-gray-900 mb-4">
+          <h3 className="text-lg font-bold text-foreground mb-4">
             {allDone ? "You crushed it today" : "Things to do today"}
           </h3>
 
@@ -581,11 +581,11 @@ export function TodoCard() {
                   onChange={(e) => setNewTaskText(e.target.value)}
                   onKeyDown={(e) => e.key === "Enter" && handleAddTask()}
                   placeholder="Add a new task..."
-                  className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-300 focus:border-transparent"
+                  className="flex-1 px-3 py-2 text-sm border border-input bg-background text-foreground rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:border-transparent placeholder:text-muted-foreground"
                 />
                 <button
                   onClick={handleAddTask}
-                  className="px-3 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors"
+                  className="px-3 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
                 >
                   <Plus size={16} />
                 </button>
@@ -619,13 +619,13 @@ export function TodoCard() {
 
           {allDone && (
             <div className="relative">
-              <p className="mt-1 text-sm text-gray-700 font-medium">Take a breather and celebrate!</p>
+              <p className="mt-1 text-sm text-muted-foreground font-medium">Take a breather and celebrate!</p>
               {celebrating && <ConfettiOverlay />}
             </div>
           )}
 
           {!allDone && (
-            <p className="mt-4 text-sm text-gray-500">
+            <p className="mt-4 text-sm text-muted-foreground">
               Drag tasks to reorder • Hover for actions
             </p>
           )}
@@ -633,7 +633,7 @@ export function TodoCard() {
 
         <DragOverlay>
           {activeItem ? (
-            <div className="px-3 py-2 bg-white rounded-lg shadow-xl border border-gray-200 text-sm text-gray-900">
+            <div className="px-3 py-2 bg-card rounded-lg shadow-xl border border-border text-sm text-foreground">
               {activeItem.text}
             </div>
           ) : null}
@@ -648,16 +648,16 @@ export function TodoCard() {
         }`}
       >
         {selectedItem && (
-          <div className="w-[380px] h-full bg-white border border-l-0 border-slate-100 rounded-r-2xl shadow-lg flex flex-col">
+          <div className="w-[380px] h-full bg-card border border-l-0 border-border rounded-r-2xl shadow-lg flex flex-col">
             {/* Panel Header */}
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50 rounded-tr-2xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-border bg-muted rounded-tr-2xl">
               <div className="flex-1 min-w-0">
-                <h4 className="text-sm font-semibold text-gray-900 truncate">{selectedItem.text}</h4>
-                <p className="text-xs text-gray-500">Task details</p>
+                <h4 className="text-sm font-semibold text-foreground truncate">{selectedItem.text}</h4>
+                <p className="text-xs text-muted-foreground">Task details</p>
               </div>
               <button
                 onClick={() => setSelectedId(null)}
-                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-md transition-colors"
+                className="p-1.5 text-muted-foreground hover:text-foreground hover:bg-accent rounded-md transition-colors"
               >
                 <X size={16} />
               </button>
