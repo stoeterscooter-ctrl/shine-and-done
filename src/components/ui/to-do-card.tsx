@@ -209,7 +209,26 @@ function SortableItem({
           {item.text}
         </span>
 
-        {/* Details button */}
+        {/* Due date badge */}
+        {item.dueDate && (
+          <span
+            className={cn(
+              "text-[10px] font-medium px-1.5 py-0.5 rounded-md whitespace-nowrap",
+              (() => {
+                const due = new Date(item.dueDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                due.setHours(0, 0, 0, 0);
+                if (item.done) return "bg-muted text-muted-foreground";
+                if (due < today) return "bg-destructive/15 text-destructive";
+                if (due.getTime() === today.getTime()) return "bg-primary/15 text-primary";
+                return "bg-muted text-muted-foreground";
+              })()
+            )}
+          >
+            {format(new Date(item.dueDate), "MMM d")}
+          </span>
+        )}
         <button
           onClick={() => onOpenDetails(item.id)}
           className={`p-1 transition-all ${
