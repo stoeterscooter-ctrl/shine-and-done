@@ -108,6 +108,7 @@ interface SortableItemProps {
   onToggleExpand: (id: string) => void;
   onOpenDetails: (id: string) => void;
   onSetDueDate: (id: string, date: string | undefined) => void;
+  onRenameItem: (id: string, text: string) => void;
   selectedId?: string | null;
   isDragging?: boolean;
 }
@@ -121,9 +122,13 @@ function SortableItem({
   onToggleExpand,
   onOpenDetails,
   onSetDueDate,
+  onRenameItem,
   selectedId,
   isDragging 
 }: SortableItemProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState(item.text);
+  const inputRef = useRef<HTMLInputElement>(null);
   const {
     attributes,
     listeners,
@@ -200,14 +205,45 @@ function SortableItem({
         </label>
 
         {/* Text */}
-        <span
-          onClick={() => onOpenDetails(item.id)}
-          className={`flex-1 text-sm transition-all duration-200 cursor-pointer hover:text-foreground ${
-            item.done ? "text-muted-foreground line-through" : "text-foreground"
-          }`}
-        >
-          {item.text}
-        </span>
+        {isEditing ? (
+          <input
+            ref={inputRef}
+            type="text"
+            value={editText}
+            onChange={(e) => setEditText(e.target.value)}
+            onBlur={() => {
+              if (editText.trim()) onRenameItem(item.id, editText.trim());
+              setIsEditing(false);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                if (editText.trim()) onRenameItem(item.id, editText.trim());
+                setIsEditing(false);
+              }
+              if (e.key === "Escape") {
+                setEditText(item.text);
+                setIsEditing(false);
+              }
+            }}
+            className="flex-1 text-sm bg-transparent border-b border-primary outline-none text-foreground"
+            autoFocus
+          />
+        ) : (
+          <span
+            onClick={() => onOpenDetails(item.id)}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setEditText(item.text);
+              setIsEditing(true);
+            }}
+            className={`flex-1 text-sm transition-all duration-200 cursor-pointer hover:text-foreground ${
+              item.done ? "text-muted-foreground line-through" : "text-foreground"
+            }`}
+            title="Double-click to edit"
+          >
+            {item.text}
+          </span>
+        )}
 
         {/* Due date badge */}
         {item.dueDate && (
