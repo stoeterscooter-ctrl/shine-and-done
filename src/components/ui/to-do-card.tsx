@@ -553,6 +553,8 @@ export function TodoCard() {
     setItems(renameItemById(items, id, text));
   };
 
+  const selectedItem = selectedId ? findItemById(items, selectedId) : null;
+
   const resetList = () => setItems(initialItems);
 
   const countAllItems = (items: TodoItem[]): { total: number; done: number } => {
