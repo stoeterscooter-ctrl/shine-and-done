@@ -335,6 +335,8 @@ export function TodoCard() {
   const [isOverDelete, setIsOverDelete] = useState(false);
   const [newTaskText, setNewTaskText] = useState("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "done">("all");
   const { theme, setTheme, resolvedTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
 
