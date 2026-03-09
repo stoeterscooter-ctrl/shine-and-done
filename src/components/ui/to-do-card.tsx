@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   DndContext,
   closestCenter,
@@ -19,9 +19,13 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown, FileText, X, Sun, Moon } from "lucide-react";
+import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown, FileText, X, Sun, Moon, CalendarIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { LiveMarkdownEditor } from "./markdown-editor";
+import { format } from "date-fns";
+import { Calendar } from "./calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "./popover";
+import { cn } from "@/lib/utils";
 
 interface TodoItem {
   id: string;
@@ -103,6 +107,7 @@ interface SortableItemProps {
   onAddChild: (parentId: string) => void;
   onToggleExpand: (id: string) => void;
   onOpenDetails: (id: string) => void;
+  onSetDueDate: (id: string, date: string | undefined) => void;
   selectedId?: string | null;
   isDragging?: boolean;
 }
@@ -115,6 +120,7 @@ function SortableItem({
   onAddChild,
   onToggleExpand,
   onOpenDetails,
+  onSetDueDate,
   selectedId,
   isDragging 
 }: SortableItemProps) {
@@ -203,7 +209,26 @@ function SortableItem({
           {item.text}
         </span>
 
-        {/* Details button */}
+        {/* Due date badge */}
+        {item.dueDate && (
+          <span
+            className={cn(
+              "text-[10px] font-medium px-1.5 py-0.5 rounded-md whitespace-nowrap",
+              (() => {
+                const due = new Date(item.dueDate);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                due.setHours(0, 0, 0, 0);
+                if (item.done) return "bg-muted text-muted-foreground";
+                if (due < today) return "bg-destructive/15 text-destructive";
+                if (due.getTime() === today.getTime()) return "bg-primary/15 text-primary";
+                return "bg-muted text-muted-foreground";
+              })()
+            )}
+          >
+            {format(new Date(item.dueDate), "MMM d")}
+          </span>
+        )}
         <button
           onClick={() => onOpenDetails(item.id)}
           className={`p-1 transition-all ${
@@ -246,6 +271,7 @@ function SortableItem({
               onAddChild={onAddChild}
               onToggleExpand={onToggleExpand}
               onOpenDetails={onOpenDetails}
+              onSetDueDate={onSetDueDate}
               selectedId={selectedId}
             />
           ))}
@@ -459,6 +485,22 @@ export function TodoCard() {
     });
   };
 
+  const updateItemDueDate = (items: TodoItem[], id: string, dueDate: string | undefined): TodoItem[] => {
+    return items.map((item) => {
+      if (item.id === id) {
+        return { ...item, dueDate };
+      }
+      if (item.children) {
+        return { ...item, children: updateItemDueDate(item.children, id, dueDate) };
+      }
+      return item;
+    });
+  };
+
+  const handleSetDueDate = (id: string, dueDate: string | undefined) => {
+    setItems(updateItemDueDate(items, id, dueDate));
+  };
+
   const handleUpdateNotes = (id: string, notes: string) => {
     setItems(updateItemNotes(items, id, notes));
   };
@@ -613,6 +655,7 @@ export function TodoCard() {
                       onAddChild={handleAddChild}
                       onToggleExpand={handleToggleExpand}
                       onOpenDetails={(id) => setSelectedId(selectedId === id ? null : id)}
+                      onSetDueDate={handleSetDueDate}
                       selectedId={selectedId}
                     />
                   ))}
@@ -672,6 +715,45 @@ export function TodoCard() {
               >
                 <X size={16} />
               </button>
+            </div>
+
+            {/* Due Date Picker */}
+            <div className="px-4 py-3 border-b border-border">
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Due date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-2 text-sm border border-input bg-background rounded-lg hover:bg-muted/50 transition-colors text-left",
+                      !selectedItem.dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon size={14} />
+                    {selectedItem.dueDate
+                      ? format(new Date(selectedItem.dueDate), "PPP")
+                      : "Set due date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedItem.dueDate ? new Date(selectedItem.dueDate) : undefined}
+                    onSelect={(date) =>
+                      handleSetDueDate(selectedItem.id, date ? date.toISOString() : undefined)
+                    }
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {selectedItem.dueDate && (
+                <button
+                  onClick={() => handleSetDueDate(selectedItem.id, undefined)}
+                  className="mt-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Remove due date
+                </button>
+              )}
             </div>
 
             {/* Markdown Editor */}
