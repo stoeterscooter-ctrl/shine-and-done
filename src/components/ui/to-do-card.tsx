@@ -256,7 +256,18 @@ function SortableItem({
 }
 
 export function TodoCard() {
-  const [items, setItems] = useState<TodoItem[]>(initialItems);
+  const [items, setItems] = useState<TodoItem[]>(() => {
+    try {
+      const saved = localStorage.getItem("todo-items");
+      return saved ? JSON.parse(saved) : initialItems;
+    } catch {
+      return initialItems;
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem("todo-items", JSON.stringify(items));
+  }, [items]);
   const [dateInfo, setDateInfo] = useState({ date: "", time: "" });
   const [activeId, setActiveId] = useState<string | null>(null);
   const [isOverDelete, setIsOverDelete] = useState(false);
