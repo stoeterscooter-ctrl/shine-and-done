@@ -22,7 +22,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown, FileText, X, Sun, Moon, CalendarIcon } from "lucide-react";
 import { useTheme } from "next-themes";
 import { LiveMarkdownEditor } from "./markdown-editor";
-import { format, isPast, isToday } from "date-fns";
+import { format } from "date-fns";
 import { Calendar } from "./calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "./popover";
 import { cn } from "@/lib/utils";
@@ -271,6 +271,7 @@ function SortableItem({
               onAddChild={onAddChild}
               onToggleExpand={onToggleExpand}
               onOpenDetails={onOpenDetails}
+              onSetDueDate={onSetDueDate}
               selectedId={selectedId}
             />
           ))}
@@ -484,6 +485,22 @@ export function TodoCard() {
     });
   };
 
+  const updateItemDueDate = (items: TodoItem[], id: string, dueDate: string | undefined): TodoItem[] => {
+    return items.map((item) => {
+      if (item.id === id) {
+        return { ...item, dueDate };
+      }
+      if (item.children) {
+        return { ...item, children: updateItemDueDate(item.children, id, dueDate) };
+      }
+      return item;
+    });
+  };
+
+  const handleSetDueDate = (id: string, dueDate: string | undefined) => {
+    setItems(updateItemDueDate(items, id, dueDate));
+  };
+
   const handleUpdateNotes = (id: string, notes: string) => {
     setItems(updateItemNotes(items, id, notes));
   };
@@ -638,6 +655,7 @@ export function TodoCard() {
                       onAddChild={handleAddChild}
                       onToggleExpand={handleToggleExpand}
                       onOpenDetails={(id) => setSelectedId(selectedId === id ? null : id)}
+                      onSetDueDate={handleSetDueDate}
                       selectedId={selectedId}
                     />
                   ))}
@@ -697,6 +715,45 @@ export function TodoCard() {
               >
                 <X size={16} />
               </button>
+            </div>
+
+            {/* Due Date Picker */}
+            <div className="px-4 py-3 border-b border-border">
+              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Due date</label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button
+                    className={cn(
+                      "w-full flex items-center gap-2 px-3 py-2 text-sm border border-input bg-background rounded-lg hover:bg-muted/50 transition-colors text-left",
+                      !selectedItem.dueDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon size={14} />
+                    {selectedItem.dueDate
+                      ? format(new Date(selectedItem.dueDate), "PPP")
+                      : "Set due date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedItem.dueDate ? new Date(selectedItem.dueDate) : undefined}
+                    onSelect={(date) =>
+                      handleSetDueDate(selectedItem.id, date ? date.toISOString() : undefined)
+                    }
+                    initialFocus
+                    className={cn("p-3 pointer-events-auto")}
+                  />
+                </PopoverContent>
+              </Popover>
+              {selectedItem.dueDate && (
+                <button
+                  onClick={() => handleSetDueDate(selectedItem.id, undefined)}
+                  className="mt-1.5 text-xs text-muted-foreground hover:text-destructive transition-colors"
+                >
+                  Remove due date
+                </button>
+              )}
             </div>
 
             {/* Markdown Editor */}
