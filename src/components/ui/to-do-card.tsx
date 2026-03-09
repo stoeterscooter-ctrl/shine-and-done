@@ -557,6 +557,23 @@ export function TodoCard() {
 
   const selectedItem = selectedId ? findItemById(items, selectedId) : null;
 
+  const filterItems = (items: TodoItem[], query: string, status: "all" | "active" | "done"): TodoItem[] => {
+    return items.reduce<TodoItem[]>((acc, item) => {
+      const filteredChildren = item.children ? filterItems(item.children, query, status) : [];
+      const matchesQuery = !query || item.text.toLowerCase().includes(query.toLowerCase());
+      const matchesStatus = status === "all" || (status === "done" ? item.done : !item.done);
+      if (matchesQuery || filteredChildren.length > 0) {
+        if (matchesStatus || filteredChildren.length > 0) {
+          acc.push({ ...item, children: filteredChildren });
+        }
+      }
+      return acc;
+    }, []);
+  };
+
+  const isFiltering = searchQuery || statusFilter !== "all";
+  const displayItems = isFiltering ? filterItems(items, searchQuery, statusFilter) : items;
+
   const resetList = () => setItems(initialItems);
 
   const countAllItems = (items: TodoItem[]): { total: number; done: number } => {
