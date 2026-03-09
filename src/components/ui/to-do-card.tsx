@@ -120,6 +120,7 @@ function SortableItem({
   onAddChild,
   onToggleExpand,
   onOpenDetails,
+  onSetDueDate,
   selectedId,
   isDragging 
 }: SortableItemProps) {
