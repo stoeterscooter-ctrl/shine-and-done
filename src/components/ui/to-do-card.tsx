@@ -107,6 +107,7 @@ interface SortableItemProps {
   onAddChild: (parentId: string) => void;
   onToggleExpand: (id: string) => void;
   onOpenDetails: (id: string) => void;
+  onSetDueDate: (id: string, date: string | undefined) => void;
   selectedId?: string | null;
   isDragging?: boolean;
 }
