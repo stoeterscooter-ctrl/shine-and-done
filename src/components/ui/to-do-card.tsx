@@ -19,7 +19,7 @@ import {
   verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown, FileText, X, Sun, Moon, CalendarIcon } from "lucide-react";
+import { Trash2, GripVertical, Plus, ChevronRight, ChevronDown, FileText, X, Sun, Moon, CalendarIcon, Search } from "lucide-react";
 import { useTheme } from "next-themes";
 import { LiveMarkdownEditor } from "./markdown-editor";
 import { format } from "date-fns";
